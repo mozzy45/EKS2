@@ -160,7 +160,14 @@ resource "kubernetes_ingress_v1" "nginx_ingress" {
     }
   }
 
-  depends_on = [helm_release.alb_controller, kubernetes_deployment_v1.nginx]
+# FIX: Expanded dependencies to keep the EKS engine active until the ALB is deleted
+  depends_on = [
+    helm_release.alb_controller,
+    kubernetes_deployment_v1.nginx,
+    aws_eks_node_group.main,
+    aws_eks_cluster.main
+  ]
+
 }
 
 output "alb_dns_name" {
