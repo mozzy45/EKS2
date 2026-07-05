@@ -1,3 +1,4 @@
+# --- 1. CORE NETWORKING ENGINE ---
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -17,6 +18,7 @@ resource "aws_internet_gateway" "gw" {
   tags   = { Name = "eks-igw" }
 }
 
+# --- 2. SUBNETS CONFIGURATION WITH DISCOVERY TAGS ---
 resource "aws_subnet" "public" {
   count                   = 2
   vpc_id                  = aws_vpc.main.id
@@ -44,6 +46,7 @@ resource "aws_subnet" "private" {
   }
 }
 
+# --- 3. NAT GATEWAY ENGINE ---
 resource "aws_eip" "nat" {
   domain = "vpc"
 }
@@ -54,12 +57,14 @@ resource "aws_nat_gateway" "nat" {
   depends_on    = [aws_internet_gateway.gw]
 }
 
+# --- 4. ROUTE TABLES ---
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.gw.id
   }
+  tags = { Name = "eks-public-rt" }
 }
 
 resource "aws_route_table" "private" {
@@ -68,16 +73,21 @@ resource "aws_route_table" "private" {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.nat.id
   }
+  tags = { Name = "eks-private-rt" }
 }
 
+# --- 5. LOOPED ROUTE TABLE ASSOCIATIONS ---
 resource "aws_route_table_association" "public" {
-  count          = 2
+  count = 2
+  # FIXED: Wrapped in correct list element interpolation format
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "private" {
-  count          = 2
+  count = 2
+  # FIXED: Wrapped in correct list element interpolation format
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
 }
+

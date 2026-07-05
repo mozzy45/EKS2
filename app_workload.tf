@@ -54,7 +54,7 @@ resource "kubernetes_deployment_v1" "nginx" {
         init_container {
           name  = "init-html"
           image = "alpine/k8s:1.29.2"
-          
+
           # INJECT THE MISSING ENVIRONMENT VARIABLE HERE:
           env {
             name = "MY_NODE_NAME"
@@ -64,7 +64,7 @@ resource "kubernetes_deployment_v1" "nginx" {
               }
             }
           }
- 
+
           command = [
             "/bin/bash",
             "-c",
@@ -160,7 +160,7 @@ resource "kubernetes_ingress_v1" "nginx_ingress" {
     }
   }
 
-# FIX: Expanded dependencies to keep the EKS engine active until the ALB is deleted
+  # FIX: Expanded dependencies to keep the EKS engine active until the ALB is deleted
   depends_on = [
     helm_release.alb_controller,
     kubernetes_deployment_v1.nginx,
